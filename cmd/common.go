@@ -2,9 +2,10 @@ package cmd
 
 import (
 	"fmt"
+
 	"github.com/zu1k/he/constant"
 )
 
-func ShowAsciiPic()  {
+func ShowAsciiPic() {
 	fmt.Println(constant.AsciiPic)
 }
