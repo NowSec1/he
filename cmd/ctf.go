@@ -35,9 +35,15 @@ var ctfMiscPngCRCCmd = &cobra.Command{
 		if f := cmd.Flag("file"); f.Changed {
 			filePath := f.Value.String()
 			fmt.Println("Checking PNG file...")
-			png.PngStart(filePath)
+			pngfile, err := png.NewPNG(filePath)
+			if err != nil {
+				fmt.Println(err.Error())
+			}
+			fix := false
+			fix, _ = cmd.Flags().GetBool("fix")
+			pngfile.CheckAllChunks(fix)
 		} else {
-			fmt.Println("Usage: he ctf misc pngcrc file.png")
+			fmt.Println("Help: he ctf misc pngcrc -h")
 		}
 	},
 }
@@ -47,6 +53,7 @@ func init() {
 	ctfCmd.AddCommand(ctfMiscCmd)
 	ctfMiscCmd.AddCommand(ctfMiscPngCRCCmd)
 	ctfMiscPngCRCCmd.Flags().StringP("file", "f", "", "png file path")
+	ctfMiscPngCRCCmd.Flags().BoolP("fix", "x", false, "fix png file")
 
 	// Here you will define your flags and configuration settings.
 

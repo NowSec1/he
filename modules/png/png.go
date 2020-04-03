@@ -24,7 +24,7 @@ func NewPNG(filePath string) (png pngFile, err error) {
 	defer file.Close()
 
 	fileInfo, err := file.Stat()
-	fmt.Printf("Name: %s\nSize: %d B\nModTime: %s\n\n", fileInfo.Name(), fileInfo.Size(), fileInfo.ModTime())
+	fmt.Printf("Name: %s\nSize: %d B\nModTime: %s\n", fileInfo.Name(), fileInfo.Size(), fileInfo.ModTime())
 
 	if !isPng(file) {
 		fmt.Fprintln(os.Stderr, "Not a PNG")

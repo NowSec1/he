@@ -62,10 +62,11 @@ func (c Chunk) String() string {
 
 func (c Chunk) Bytes() []byte {
 	var buffer bytes.Buffer
-
-	binary.Write(&buffer, binary.BigEndian, c.Type)
+	err := binary.Write(&buffer, binary.BigEndian, c.Type)
+	if err != nil {
+		return nil
+	}
 	buffer.Write(c.Data)
-
 	return buffer.Bytes()
 }
 
