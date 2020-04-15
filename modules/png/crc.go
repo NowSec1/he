@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"hash/crc32"
 	"io"
-	"os"
+	"io/ioutil"
 	"strings"
 )
 
@@ -77,13 +77,10 @@ func (p pngFile) CheckFirstChunk(fix bool) (valid bool) {
 	}
 }
 
-func (c Chunk) EnumWeight(wmax int) (height int, err error) {
-	for weight := 0; weight < wmax; weight++ {
-		tmpdata := c.Bytes()
-		tmpdata[4] = byte(weight >> 24)
-		tmpdata[5] = byte(weight >> 16)
-		tmpdata[6] = byte(weight >> 8)
-		tmpdata[7] = byte(weight)
+func (c Chunk) EnumWeight(wmax int) (weight int, err error) {
+	tmpdata := c.Bytes()
+	for weight = 0; weight < wmax; weight++ {
+		binary.BigEndian.PutUint32(tmpdata[4:8], uint32(weight))
 		tmpcrc := crc32.ChecksumIEEE(tmpdata)
 		if tmpcrc == c.CRC {
 			fmt.Printf("Real weight found: 0x%x  =  %d\n", weight, weight)
@@ -94,12 +91,9 @@ func (c Chunk) EnumWeight(wmax int) (height int, err error) {
 }
 
 func (c Chunk) EnumHeight(hmax int) (height int, err error) {
+	tmpdata := c.Bytes()
 	for height = 0; height < hmax; height++ {
-		tmpdata := c.Bytes()
-		tmpdata[8] = byte(height >> 24)
-		tmpdata[9] = byte(height >> 16)
-		tmpdata[10] = byte(height >> 8)
-		tmpdata[11] = byte(height)
+		binary.BigEndian.PutUint32(tmpdata[8:12], uint32(height))
 		tmpcrc := crc32.ChecksumIEEE(tmpdata)
 		if tmpcrc == c.CRC {
 			fmt.Printf("Real height found: 0x%x  =  %d\n", height, height)
@@ -113,14 +107,8 @@ func (c Chunk) EnumAll(max int) (height, weight int, err error) {
 	tmpdata := c.Bytes()
 	for weight = 0; weight < max; weight++ {
 		for height = 0; height < max; height++ {
-			tmpdata[4] = byte(weight >> 24)
-			tmpdata[5] = byte(weight >> 16)
-			tmpdata[6] = byte(weight >> 8)
-			tmpdata[7] = byte(weight)
-			tmpdata[8] = byte(height >> 24)
-			tmpdata[9] = byte(height >> 16)
-			tmpdata[10] = byte(height >> 8)
-			tmpdata[11] = byte(height)
+			binary.BigEndian.PutUint32(tmpdata[4:8], uint32(weight))
+			binary.BigEndian.PutUint32(tmpdata[8:12], uint32(height))
 			tmpcrc := crc32.ChecksumIEEE(tmpdata)
 			if tmpcrc == c.CRC {
 				fmt.Printf("Real weight found: 0x%x  =  %d\n", weight, weight)
@@ -133,45 +121,23 @@ func (c Chunk) EnumAll(max int) (height, weight int, err error) {
 
 func (p pngFile) fixPNG(filePath string, weight, height uint32) {
 	fmt.Println("\nTry to fix png file...")
-	// 打开原始文件
-	originalFile, err := os.Open(p.path)
-	if err != nil {
-	}
-	defer originalFile.Close()
-	// 创建新的文件作为目标文件
-	newFile, err := os.Create(filePath)
-	if err != nil {
-		return
-	}
-	defer newFile.Close()
-	// 从源中复制字节到目标文件
-	_, err = io.Copy(newFile, originalFile)
+	originData, err := ioutil.ReadFile(p.path)
 	if err != nil {
 		return
 	}
 
 	// FIX
 	if weight > 0 {
-		w := make([]byte, 4)
-		binary.BigEndian.PutUint32(w, weight)
-		_, err = newFile.WriteAt(w, 16)
-		if err != nil {
-			fmt.Println(err.Error())
-		}
+		binary.BigEndian.PutUint32(originData[16:20], weight)
 	}
 
 	if height > 0 {
-		h := make([]byte, 4)
-		binary.BigEndian.PutUint32(h, height)
-		_, err = newFile.WriteAt(h, 20)
-		if err != nil {
-			fmt.Println(err.Error())
-		}
+		binary.BigEndian.PutUint32(originData[20:24], height)
 	}
 
-	// 将文件内容flush到硬盘中
-	err = newFile.Sync()
+	err = ioutil.WriteFile(filePath, originData, 0666)
 	if err != nil {
+		fmt.Println(err.Error())
 	}
 	fmt.Println("fix png file succeed")
 }
