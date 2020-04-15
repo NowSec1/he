@@ -20,6 +20,10 @@
 
 - NOT WRITE
 
+## Usage
+
+- png crc check and fix: `he misc pngcrc -f file.png -x`
+
 
 ## Install
 
